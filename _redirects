@@ -1,0 +1,8 @@
+# Redirect /argentina to /argentina.html
+/argentina /argentina.html 200
+
+# Redirect root to index.html
+/ /index.html 200
+
+# 404 fallback
+/* /404.html 404

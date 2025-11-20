@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-gray-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Interactive EOR proposal for Argentina with dynamic cost calculator, compliance details, and comprehensive benefits breakdown.">
+    <meta name="robots" content="noindex, nofollow">
+    <meta property="og:title" content="RecruitGo EOR Proposal: Argentina">
+    <meta property="og:description" content="Interactive EOR proposal with dynamic cost calculator">
+    <meta property="og:type" content="website">
+    <title>RecruitGo EOR Proposal: Argentina</title>
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <!-- Chosen Palette: Neutral Professional (Warm neutrals with a blue/indigo accent) --><!-- Application Structure Plan: A SPA with a sticky side-navigation (top-bar on mobile) and a main content area. The 12 report sections are synthesized into 5 user-centric themes: 1. Dashboard (Overview/Cost Chart), 2. Detailed Cost (CTC Table), 3. Process (Interactive Onboarding/Monthly flow), 4. Benefits & Legal (Tabbed entitlements/benefits), 5. Terms (Finance, Security, POC). This structure is chosen to match a user's mental model (Overview -> Cost Details -> Process -> Legal -> Fine Print) rather than a linear document, improving usability and quick access to information. --><!-- Visualization & Content Choices: 1. Key Costs (Sec 1&4) -> Goal: Inform -> Viz: Large number "Key Metric" cards -> Interaction: Dynamic update based on calculator -> Justification: Immediate "bottom line" answer -> Method: HTML/Tailwind/JS. 2. Total Invoice Breakdown (Sec 4) -> Goal: Inform (Proportions) -> Viz: Doughnut Chart -> Interaction: Hover for details, updates with calculator -> Justification: Visual split of TME vs. Fee -> Library: Chart.js (Canvas). 3. Process Flow (Sec 2, 6, 9) -> Goal: Organize/Show change -> Viz: Tabbed sequential lists -> Interaction: JS-powered tabs for "Onboarding" and "Monthly Cycle" -> Justification: Makes dense process info interactive and digestible. -> Method: HTML/Tailwind/JS (No SVG/Mermaid). 4. Entitlements/Benefits (Sec 7, 8) -> Goal: Organize -> Viz: Tabbed content blocks -> Interaction: JS-powered tabs -> Justification: Groups related legal/HR info neatly. -> Method: HTML/Tailwind/JS. --><!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. --><style>
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 450px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="h-full" x-data="{ open: false, activeSection: 'dashboard' }">
+    <div class="min-h-full">
+        <nav class="bg-gray-800 md:hidden" x-data="{ open: false }">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <a href="https://recruitgo.com" target="_blank">
+                                <img class="h-8 w-auto" src="https://i0.wp.com/recruitgo.com/wp-content/uploads/2025/06/recruitgo-header-logo.png" onerror="this.onerror=null; this.src='https://placehold.co/150x32/1e3a8a/ffffff?text=RecruitGo';" alt="RecruitGo Logo">
+                            </a>
+                        </div>
+                    </div>
+                    <div class="-mr-2 flex">
+                        <button @click="open = !open" type="button" class="inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800" aria-controls="mobile-menu" aria-expanded="false">
+                            <span class="sr-only">Open main menu</span>
+                            <svg :class="{'hidden': open, 'block': !open }" class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                            </svg>
+                            <svg :class="{'block': open, 'hidden': !open }" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-1 px-2 pb-3 pt-2" id="mobile-menu" x-show="open" @click.away="open = false">
+                <!-- Changed text-gray-300 to text-gray-200 for better visibility -->
+                <a href="#dashboard" @click="activeSection = 'dashboard'; open = false" :class="{'bg-gray-900 text-white': activeSection === 'dashboard', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'dashboard'}" class="block rounded-md px-3 py-2 text-base font-medium">Dashboard</a>
+                <a href="#detailed-cost" @click="activeSection = 'detailed-cost'; open = false" :class="{'bg-gray-900 text-white': activeSection === 'detailed-cost', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'detailed-cost'}" class="block rounded-md px-3 py-2 text-base font-medium">Detailed Cost</a>
+                <a href="#process" @click="activeSection = 'process'; open = false" :class="{'bg-gray-900 text-white': activeSection === 'process', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'process'}" class="block rounded-md px-3 py-2 text-base font-medium">Process</a>
+                <a href="#benefits-legal" @click="activeSection = 'benefits-legal'; open = false" :class="{'bg-gray-900 text-white': activeSection === 'benefits-legal', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'benefits-legal'}" class="block rounded-md px-3 py-2 text-base font-medium">Benefits & Legal</a>
+                <a href="#terms" @click="activeSection = 'terms'; open = false" :class="{'bg-gray-900 text-white': activeSection === 'terms', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'terms'}" class="block rounded-md px-3 py-2 text-base font-medium">Terms & Data</a>
+            </div>
+        </nav>
+
+        <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+            <div class="flex min-h-0 flex-1 flex-col bg-gray-800">
+                <div class="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
+                    <div class="flex flex-shrink-0 items-center px-4">
+                        <a href="https://recruitgo.com" target="_blank">
+                            <img class="h-8 w-auto" src="https://i0.wp.com/recruitgo.com/wp-content/uploads/2025/06/recruitgo-header-logo.png" onerror="this.onerror=null; this.src='https://placehold.co/150x32/1e3a8a/ffffff?text=RecruitGo';" alt="RecruitGo Logo">
+                        </a>
+                    </div>
+                    <nav class="mt-5 flex-1 space-y-1 px-2">
+                        <!-- Changed text-gray-300 to text-gray-200 for better visibility -->
+                        <a href="#dashboard" @click="activeSection = 'dashboard'" :class="{'bg-gray-900 text-white': activeSection === 'dashboard', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'dashboard'}" class="group flex items-center rounded-md px-2 py-2 text-sm font-medium">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+                            Dashboard
+                        </a>
+                        <a href="#detailed-cost" @click="activeSection = 'detailed-cost'" :class="{'bg-gray-900 text-white': activeSection === 'detailed-cost', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'detailed-cost'}" class="group flex items-center rounded-md px-2 py-2 text-sm font-medium">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.536M15 15.182l-.879.536M9 10.5l1.5 1.5L12 9.5l1.5 1.5L15 10.5M5.25 12a6.75 6.75 0 1113.5 0 6.75 6.75 0 01-13.5 0z" /></svg>
+                            Detailed Cost
+                        </a>
+                        <a href="#process" @click="activeSection = 'process'" :class="{'bg-gray-900 text-white': activeSection === 'process', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'process'}" class="group flex items-center rounded-md px-2 py-2 text-sm font-medium">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.25 4.5l7.5 7.5-7.5 7.5m-6-15l7.5 7.5-7.5 7.5" /></svg>
+                            Process
+                        </a>
+                        <a href="#benefits-legal" @click="activeSection = 'benefits-legal'" :class="{'bg-gray-900 text-white': activeSection === 'benefits-legal', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'benefits-legal'}" class="group flex items-center rounded-md px-2 py-2 text-sm font-medium">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c.24 0 .468.02.69.055M12 21c-.24 0-.468.02-.69.055M12 3a9.004 9.004 0 00-8.716 6.747M12 3a9.004 9.004 0 018.716 6.747M12 3c.24 0 .468-.02.69-.055M12 3c-.24 0-.468-.02-.69-.055M6 9.75l3 3m0 0l3-3m-3 3v-6m0 0l-3 3m3-3l3 3" /></svg>
+                            Benefits & Legal
+                        </a>
+                        <a href="#terms" @click="activeSection = 'terms'" :class="{'bg-gray-900 text-white': activeSection === 'terms', 'text-gray-200 hover:bg-gray-700 hover:text-white': activeSection !== 'terms'}" class="group flex items-center rounded-md px-2 py-2 text-sm font-medium">
+                            <svg class="mr-3 h-6 w-6 flex-shrink-0 text-gray-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6.75c0 1.618-1.332 2.91-2.97 2.91s-2.97-1.292-2.97-2.91c0-1.618 1.332-2.91 2.97-2.91s2.97 1.292 2.97 2.91zm-2.97 3.66c-1.89 0-3.606 1.01-4.486 2.55C5.071 14.82 3 17.55 3 20.625c0 .345.28.625.625.625h16.75c.345 0 .625-.28.625-.625 0-3.075-2.07-5.805-3.038-7.315-1.1-1.81-2.97-2.66-4.562-2.66z" /></svg>
+                            Terms & Data
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex flex-1 flex-col md:pl-64">
+            <main class="flex-1">
+                <div class="py-6">
+                    <div class="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
+                        
+                        <header class="mb-8 bg-white shadow-sm rounded-lg p-6">
+                            <h1 class="text-3xl font-bold tracking-tight text-gray-900">EOR Proposal: Argentina</h1>
+                            <p class="mt-2 text-lg text-gray-600">Welcome to your interactive EOR proposal for Argentina. This dashboard translates our detailed proposal into an explorable format. Use the navigation to jump to key sections, starting with the cost overview below.</p>
+                        </header>
+
+                        <section id="dashboard" x-show="activeSection === 'dashboard'">
+                            <div class="mb-6">
+                                <h2 class="text-2xl font-semibold text-gray-900">At a Glance</h2>
+                                <p class="mt-1 text-gray-600">This section provides a high-level summary of the all-in costs and the breakdown of your monthly invoice.</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4" x-data="{ TME: 3000, TotalInvoice: 3300 }">
+                                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                                    <dt class="truncate text-sm font-medium text-gray-500">Total Monthly Invoice</dt>
+                                    <!-- Use Alpine Store to read the dynamic value --><dd class="mt-1 text-3xl font-semibold tracking-tight text-indigo-600" x-text="formatCurrency($store.costCalculator?.G || TotalInvoice)"></dd>
+                                </div>
+                                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                                    <dt class="truncate text-sm font-medium text-gray-500">Total Employment Cost (TME)</dt>
+                                    <!-- Use Alpine Store to read the dynamic value --><dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900" x-text="formatCurrency($store.costCalculator?.E || TME)"></dd>
+                                </div>
+                                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                                    <dt class="truncate text-sm font-medium text-gray-500">RecruitGo EOR Fee</dt>
+                                    <dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900" x-text="formatCurrency(300)"></dd>
+                                </div>
+                                <div class="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
+                                    <dt class="truncate text-sm font-medium text-gray-500">One-Time Deposit</dt>
+                                    <!-- Use Alpine Store to read the dynamic value --><dd class="mt-1 text-3xl font-semibold tracking-tight text-gray-900" x-text="formatCurrency($store.costCalculator?.G || TotalInvoice)"></dd>
+                                </div>
+                            </div>
+
+                            <div class="mt-8">
+                                <div class="overflow-hidden rounded-lg bg-white shadow">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-medium leading-6 text-gray-900">Total Monthly Invoice Breakdown (<span x-text="formatCurrency($store.costCalculator?.G || 3300)">$3,300.00</span>)</h3>
+                                        <div class="chart-container mt-4">
+                                            <canvas id="costBreakdownChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="detailed-cost" x-show="activeSection === 'detailed-cost'" x-data="costCalculator()">
+                            <div class="mb-6">
+                                <h2 class="text-2xl font-semibold text-gray-900">Detailed Cost Structure</h2>
+                                <p class="mt-1 text-gray-600">Use the calculator below to dynamically adjust the employment cost based on your desired anchor (TME, Gross, or Net Salary).</p>
+                            </div>
+                            
+                            <div class="bg-white shadow rounded-lg p-6 mb-8 grid grid-cols-1 lg:grid-cols-4 gap-6">
+                                <div class="lg:col-span-1">
+                                    <h3 class="text-lg font-medium text-gray-900 mb-4">Currency</h3>
+                                    <select x-model="currency" @change="recalculate" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                        <option value="USD">US Dollar (USD)</option>
+                                        <option value="ARS">Argentinian Peso (ARS, Estimate)</option>
+                                    </select>
+                                    <p x-show="currency === 'ARS'" class="mt-1 text-xs text-red-500">Exchange Rate: 1 USD ≈ 850 ARS (Estimate)</p>
+                                </div>
+                                <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    <div class="md:col-span-2 lg:col-span-2">
+                                        <h3 class="text-lg font-medium text-gray-900 mb-4">Cost Anchor & Input</h3>
+                                        <div class="mb-4">
+                                            <label for="input-type" class="block text-sm font-medium text-gray-700 mb-2">Choose Calculation Anchor</label>
+                                            <select id="input-type" x-model="inputAnchor" @change="recalculate" class="w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                                <option value="TME">Total Monthly Employment Cost (TME)</option>
+                                                <option value="Gross">Employee Gross Monthly Salary (Base)</option>
+                                                <option value="Net">Estimated Employee Net Monthly Salary</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="input-value" class="block text-sm font-medium text-gray-700 mb-2" x-text="'Enter Desired ' + (inputAnchor === 'TME' ? 'TME' : inputAnchor === 'Gross' ? 'Gross Salary' : 'Net Salary') + ' (' + currency + ')'"></label>
+                                            <input type="number" id="input-value" x-model.number="inputValue" @input="recalculate" min="500" class="w-full rounded-md border-gray-300 shadow-xl border-indigo-500 ring-2 ring-indigo-500 focus:border-indigo-700 focus:ring-indigo-700 p-3" :placeholder="'e.g., ' + (currency === 'USD' ? '3000' : '2,550,000')">
+                                            <p x-show="inputAnchor === 'Net'" class="mt-1 text-xs text-red-500">Note: Net Salary calculation is an **estimate** using a simplified 27% total employee deduction (17% Social + 10% Avg. Tax).</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="md:col-span-2 lg:col-span-1 border-t md:border-t-0 md:border-l border-gray-200 lg:pl-6 pt-4 lg:pt-0">
+                                        <h3 class="text-lg font-medium text-gray-900 mb-4">13th Salary (SAC) Provision</h3>
+                                        <div class="flex items-center space-x-4">
+                                            <span class="text-sm font-medium text-gray-700">Monthly Provisioning</span>
+                                            <button @click="isSacMonthly = !isSacMonthly; recalculate()" type="button" :class="isSacMonthly ? 'bg-indigo-600' : 'bg-gray-200'" class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2" role="switch" aria-checked="false" :aria-checked="isSacMonthly.toString()">
+                                                <span aria-hidden="true" :class="isSacMonthly ? 'translate-x-5' : 'translate-x-0'" class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                                            </button>
+                                            <span class="text-sm font-medium text-gray-700">Separate/One-Time Invoice</span>
+                                        </div>
+                                        <p class="mt-2 text-xs text-gray-500">Choose whether the SAC provision is calculated and reserved monthly, or invoiced only in June/December.</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="overflow-hidden rounded-lg bg-white shadow">
+                                <div class="px-4 py-5 sm:p-6">
+                                    <h3 class="text-lg font-medium text-gray-900">Calculated Cost-to-Company (CTC)</h3>
+                                    <p class="mt-2 text-sm text-gray-500">The structure is based on your input (Gross-Up/Gross-Down calculation). The **TME** is the all-inclusive cost of employment before the RecruitGo fee.</p>
+                                    <div class="mt-6 flow-root">
+                                        <div class="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                            <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                                                <table class="min-w-full divide-y divide-gray-300">
+                                                    <thead>
+                                                        <tr>
+                                                            <th scope="col" class="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Component</th>
+                                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Description</th>
+                                                            <th scope="col" class="px-3 py-3.5 text-left text-sm font-semibold text-gray-900">Calculation Basis</th>
+                                                            <th scope="col" class="relative py-3.5 pl-3 pr-4 sm:pr-0 text-left text-sm font-semibold text-gray-900">Monthly Cost (<span x-text="currency">USD</span>)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody class="divide-y divide-gray-200 bg-white">
+                                                        <tr>
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">Total Gross Remuneration (Payroll Base) - C</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">The base for all tax/social calculations.</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">Varies by input/SAC option</td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-0 text-gray-900" x-text="formatCurrency(C)"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">A. Employee Gross Monthly Salary (Base)</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">Base salary paid to the employee.</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">C / (1 + 1/12) OR C</td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-0 text-gray-900" x-text="formatCurrency(A)"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">B. Sueldo Anual Complementario (SAC / 13th Salary)</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500" x-text="isSacMonthly ? 'Monthly provision for the 13th Salary.' : 'Provision is 0, invoiced separately in June/Dec.'"></td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">C - A</td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-0 text-gray-900" x-text="formatCurrency(B)"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-0">D. Employer Statutory Contributions (27.0% of C)</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">Includes Pension, Health, Labour Risk (ART), etc.</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500">C x 27.0%</td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-0 text-gray-900" x-text="formatCurrency(D)"></td>
+                                                        </tr>
+                                                        <tr class="border-t-2 border-gray-500">
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-bold text-gray-900 sm:pl-0">E. Total Monthly Employment Cost (TME)</td>
+                                                            <td class="px-3 py-4 text-sm font-bold text-gray-500">All-inclusive fixed employment cost (C + D)</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500"></td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-bold sm:pr-0 text-gray-900" x-text="formatCurrency(E)"></td>
+                                                        </tr>
+                                                        <tr>
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-medium text-indigo-600 sm:pl-0">F. RecruitGo EOR Service Fee</td>
+                                                            <td class="px-3 py-4 text-sm text-indigo-600">Monthly EOR Management Fee.</td>
+                                                            <td class="px-3 py-4 text-sm text-indigo-600">Fixed</td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-medium sm:pr-0 text-indigo-600" x-text="formatCurrency(F)"></td>
+                                                        </tr>
+                                                        <tr class="bg-gray-50 border-t-2 border-indigo-600">
+                                                            <td class="py-4 pl-4 pr-3 text-base font-bold text-indigo-600 sm:pl-0">G. Total Monthly Invoice Amount</td>
+                                                            <td class="px-3 py-4 text-base font-bold text-indigo-600">Total amount billed to Integra (E + F)</td>
+                                                            <td class="px-3 py-4 text-sm font-bold text-indigo-600"></td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-base font-bold sm:pr-0 text-indigo-600" x-text="formatCurrency(G)"></td>
+                                                        </tr>
+                                                        <tr class="bg-indigo-50 border-t-2 border-gray-400">
+                                                            <td class="py-4 pl-4 pr-3 text-sm font-bold text-gray-900 sm:pl-0">Estimated Employee Net Salary (Take-Home)</td>
+                                                            <td class="px-3 py-4 text-sm font-bold text-gray-500">C - (C * 0.17) - (C * 0.10) (Simplified)</td>
+                                                            <td class="px-3 py-4 text-sm text-gray-500"></td>
+                                                            <td class="relative py-4 pl-3 pr-4 text-left text-sm font-bold sm:pr-0 text-gray-900" x-text="formatCurrency(N)"></td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+
+                        <section id="process" x-show="activeSection === 'process'" x-data="{ activeTab: 'onboarding' }">
+                            <div class="mb-6">
+                                <h2 class="text-2xl font-semibold text-gray-900">Service Process</h2>
+                                <p class="mt-1 text-gray-600">This section outlines the one-time onboarding steps and the recurring monthly payroll and compliance cycle. Click each tab to see the details.</p>
+                            </div>
+                            
+                            <div class="sm:hidden">
+                                <label for="tabs" class="sr-only">Select a tab</label>
+                                <select id="tabs" name="tabs" @change="activeTab = $event.target.value" class="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="onboarding" selected>1. Onboarding</option>
+                                    <option value="monthly">2. Monthly Cycle</option>
+                                </select>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div class="border-b border-gray-200">
+                                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                        <button @click="activeTab = 'onboarding'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'onboarding', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'onboarding'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">
+                                            1. Onboarding Process (7-10 Days)
+                                        </button>
+                                        <button @click="activeTab = 'monthly'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'monthly', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'monthly'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">
+                                            2. Recurring Monthly Cycle
+                                        </button>
+                                    </nav>
+                                </div>
+                            </div>
+
+                            <div class="mt-8 space-y-8">
+                                <div x-show="activeTab === 'onboarding'">
+                                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-medium text-gray-900">Onboarding Flow</h3>
+                                            <ol class="mt-4 space-y-4">
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">1</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Contract Finalization (2 Days)</h4>
+                                                        <p class="text-sm text-gray-500">RecruitGo prepares the locally compliant employment contract in Spanish.</p>
+                                                    </div>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">2</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Employee Documentation (1-2 Days)</h4>
+                                                        <p class="text-sm text-gray-500">Employee submits required documents (DNI, CUIT/CUIL, Bank Info).</p>
+                                                    </div>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">3</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Statutory Registration</h4>
+                                                        <p class="text-sm text-gray-500">RecruitGo registers the employee with AFIP (Tax) and SIPA (Social Security).</p>
+                                                    </div>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-green-600 text-white rounded-full font-bold">✓</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Ready to Work</h4>
+                                                        <p class="text-sm text-gray-500">Total estimated time: 7-10 business days.</p>
+                                                    </div>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div x-show="activeTab === 'monthly'">
+                                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-medium text-gray-900">Monthly Payroll & Compliance Cycle</h3>
+                                            <ol class="mt-4 space-y-4">
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">1</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Integra Input (by 5th of Month)</h4>
+                                                        <p class="text-sm text-gray-500">Integra submits any variable pay (bonuses, overtime) via the **RecruitGo Web Application**.</p>
+                                                    </div>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">2</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Invoice (by 15th of Month)</h4>
+                                                        <p class="text-sm text-gray-500">RecruitGo issues the single monthly invoice to Integra (Payment Terms: Net 7).</p>
+                                                    </div>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">3</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Payroll Calculation & Filing</h4>
+                                                        <p class="text-sm text-gray-500">RecruitGo calculates net pay, withholdings, and files all statutory declarations (Declaración Jurada) with AFIP.</p>
+                                                    </div>
+                                                </li>
+                                                <li class="flex items-start">
+                                                    <div class="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-indigo-600 text-white rounded-full font-bold">4</div>
+                                                    <div class="ml-4">
+                                                        <h4 class="text-md font-medium text-gray-900">Payment & Reporting (by End of Month)</h4>
+                                                        <p class="text-sm text-gray-500">RecruitGo pays the employee's net salary, remits all taxes, and provides a full payroll report to Integra.</p>
+                                                    </div>
+                                                </li>
+                                            </ol>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <section id="benefits-legal" x-show="activeSection === 'benefits-legal'" x-data="{ activeTab: 'entitlements' }">
+                            <div class="mb-6">
+                                <h2 class="text-2xl font-semibold text-gray-900">Benefits & Legal</h2>
+                                <p class="mt-1 text-gray-600">Explore the mandatory legal entitlements and benefits your employee will receive under Argentine law, all managed by RecruitGo.</p>
+                            </div>
+
+                            <div class="sm:hidden">
+                                <label for="tabs-legal" class="sr-only">Select a tab</label>
+                                <select id="tabs-legal" name="tabs-legal" @change="activeTab = $event.target.value" class="block w-full rounded-md border-gray-300 focus:border-indigo-500 focus:ring-indigo-500">
+                                    <option value="entitlements" selected>Statutory Entitlements</option>
+                                    <option value="benefits">Benefits Provision</option>
+                                    <option value="payroll-vars">Payroll Adjustments</option>
+                                </select>
+                            </div>
+                            <div class="hidden sm:block">
+                                <div class="border-b border-gray-200">
+                                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                                        <button @click="activeTab = 'entitlements'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'entitlements', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'entitlements'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">
+                                            Statutory Entitlements
+                                        </button>
+                                        <button @click="activeTab = 'benefits'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'benefits', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'benefits'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">
+                                            Benefits Provision
+                                        </button>
+                                        <button @click="activeTab = 'payroll-vars'" :class="{'border-indigo-500 text-indigo-600': activeTab === 'payroll-vars', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'payroll-vars'}" class="whitespace-nowrap border-b-2 py-4 px-1 text-sm font-medium">
+                                            Payroll Adjustments
+                                        </button>
+                                    </nav>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-8">
+                                <div x-show="activeTab === 'entitlements'">
+                                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-medium text-gray-900">Mandatory Employment Conditions</h3>
+                                            <div class="mt-4 flow-root">
+                                                <ul role="list" class="divide-y divide-gray-200">
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Probation Period:</span><span class="text-gray-600 w-2/3">90 days (3 months)</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Annual Leave:</span><span class="text-gray-600 w-2/3">14 calendar days (for < 5 years service)</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Sick Leave:</span><span class="text-gray-600 w-2/3">3 months paid leave per year (doubled to 6 if employee has dependents)</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Maternity Leave:</span><span class="text-gray-600 w-2/3">90 calendar days (paid via Social Security)</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Paternity Leave:</span><span class="text-gray-600 w-2/3">2 consecutive paid days</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Marriage Leave:</span><span class="text-gray-600 w-2/3">10 consecutive days</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Notice Period (by Employer):</span><span class="text-gray-600 w-2/3">1 month (0-5 years service) or 2 months (>5 years)</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Severance (w/o cause):</span><span class="text-gray-600 w-2/3">1 month's highest regular salary per year of service</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="activeTab === 'benefits'">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div class="overflow-hidden rounded-lg bg-white shadow">
+                                            <div class="p-6">
+                                                <h3 class="text-lg font-medium text-gray-900">Mandatory Statutory Benefits</h3>
+                                                <p class="text-sm text-gray-500">(Included in employer/employee contributions)</p>
+                                                <ul role="list" class="mt-4 list-disc list-inside space-y-2 text-gray-600">
+                                                    <li><span class="font-medium text-gray-700">Health Insurance (Obras Sociales):</span> Access to mandatory basic healthcare.</li>
+                                                    <li><span class="font-medium text-gray-700">Pension Fund (SIPA):</span> Enrollment in the national retirement system.</li>
+                                                    <li><span class="font-medium text-gray-700">Labour Risk Insurance (ART):</span> Coverage for work-related injuries.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                        <div class="overflow-hidden rounded-lg bg-white shadow">
+                                            <div class="p-6">
+                                                <h3 class="text-lg font-medium text-gray-900">Optional / Supplemental Benefits</h3>
+                                                <p class="text-sm text-gray-500">(Available upon request, cost added to invoice)</p>
+                                                <ul role="list" class="mt-4 list-disc list-inside space-y-2 text-gray-600">
+                                                    <li><span class="font-medium text-gray-700">Private Health Insurance (Prepaga):</span> We can administer enrollment in supplemental private health plans, which are a highly valued benefit in Argentina.</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div x-show="activeTab === 'payroll-vars'">
+                                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-medium text-gray-900">Handling Payroll Administration & Adjustments</h3>
+                                            <div class="mt-4 flow-root">
+                                                <ul role="list" class="divide-y divide-gray-200">
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Allowances:</span><span class="text-gray-600 w-2/3">Handled as non-salary compensation where legally permissible or grossed up as taxable income.</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Bonuses:</span><span class="text-gray-600 w-2/3">Treated as taxable compensation and subject to all social security contributions. Included in SAC calculation.</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Overtime:</span><span class="text-gray-600 w-2/3">Processed at 50% (weekdays) or 100% (weekends/holidays) premium, as submitted monthly by Integra.</span></li>
+                                                    <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Statutory Adjustments:</span><span class="text-gray-600 w-2/3">We automatically monitor and apply all changes to minimum wage, tax brackets, and contribution caps.</span></li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section id="terms" x-show="activeSection === 'terms'">
+                            <div class="mb-6">
+                                <h2 class="text-2xl font-semibold text-gray-900">Terms & Data</h2>
+                                <p class="mt-1 text-gray-600">This final section covers important details regarding financial terms, data security, and your dedicated point of contact at RecruitGo.</p>
+                            </div>
+                            <div class="space-y-6">
+                                <div class="overflow-hidden rounded-lg bg-white shadow">
+                                    <div class="p-6">
+                                        <h3 class="text-lg font-medium text-gray-900">Financial & Billing Terms</h3>
+                                        <ul role="list" class="mt-4 divide-y divide-gray-200">
+                                            <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Billing Cycle:</span><span class="text-gray-600 w-2/3">Monthly. Invoice issued on the 15th for the current month.</span></li>
+                                            <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Payment Terms:</span><span class="text-gray-600 w-2/3">Net 7 days. Payment must be received within 7 calendar days.</span></li>
+                                            <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Invoice Contents:</span><span class="text-gray-600 w-2/3">Yes, all employer taxes and contributions are included in the $3,000 TME portion of the invoice.</span></li>
+                                            <li class="flex py-4"><span class="font-medium text-gray-900 w-1/3">Currency:</span><span class="text-gray-600 w-2/3">The $3,000 TME is a USD nominal anchor. Payroll is calculated and paid in ARS based on the official exchange rate, ensuring compliance.</span></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-medium text-gray-900">Data Security Standards</h3>
+                                            <p class="text-sm text-gray-500">We adhere to international best practices for data privacy.</p>
+                                            <ul role="list" class="mt-4 list-disc list-inside space-y-2 text-gray-600">
+                                                <li>GDPR-aligned processes</li>
+                                                <li>End-to-end encryption (TLS/SSL) for all sensitive data</li>
+                                                <li>Strict role-based access controls (RBAC)</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="overflow-hidden rounded-lg bg-white shadow">
+                                        <div class="p-6">
+                                            <h3 class="text-lg font-medium text-gray-900">Your Point of Contact</h3>
+                                            <p class="text-sm text-gray-500">For all ongoing coordination and queries:</p>
+                                            <div class="mt-4">
+                                                <p class="font-medium text-gray-800">Sofia Rodriguez</p>
+                                                <p class="text-sm text-gray-600">Senior Global Payroll Coordinator, Latin America</p>
+                                                <p class="text-sm text-gray-600 mt-1">sofia.rodriguez@recruitgo.com</p>
+                                                <p class="text-sm text-gray-600">+54 11 XXXX-YYYY</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        let costChart = null;
+        
+        const EMPLOYER_RATE = 0.27; 
+        const SAC_FACTOR = 1 / 12; 
+        const EOR_FEE = 300; 
+        const EE_DEDUCTIONS_RATE = 0.17; 
+        const EE_TAX_ESTIMATE_RATE = 0.10; 
+        const NET_ESTIMATE_FACTOR = 1 - EE_DEDUCTIONS_RATE - EE_TAX_ESTIMATE_RATE; 
+        const EXCHANGE_RATE_ARS = 850; 
+
+        function round(num) {
+            return Math.round((num + Number.EPSILON) * 100) / 100;
+        }
+
+        // Global function to read the latest calculated values and format them
+        function formatCurrency(num) {
+            const costStore = window.Alpine.store('costCalculator');
+            const currency = costStore?.currency || 'USD';
+            let code, minimumFractionDigits;
+
+            let value = num;
+
+            if (currency === 'ARS') {
+                value = round(value * EXCHANGE_RATE_ARS);
+                code = 'ARS';
+                minimumFractionDigits = 0;
+            } else {
+                code = 'USD';
+                minimumFractionDigits = 2;
+            }
+
+            return value !== undefined ? new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: code,
+                minimumFractionDigits: minimumFractionDigits,
+                maximumFractionDigits: 2
+            }).format(value) : (currency === 'ARS' ? 'ARS 0' : '$0.00');
+        }
+
+        function costCalculator() {
+            return {
+                inputAnchor: 'TME', 
+                inputValue: 3000,
+                isSacMonthly: true, 
+                currency: 'USD',
+
+                E: 3000,
+                G: 3300,
+                C: 2362.20, 
+                A: 2180.49, 
+                B: 181.71,  
+                D: 637.80,  
+                F: EOR_FEE, 
+                N: 1724.41, 
+
+                init() {
+                    window.Alpine.store('costCalculator', this);
+                    this.readUrlState();
+                    this.recalculate();
+                },
+
+                readUrlState() {
+                    const params = new URLSearchParams(window.location.search);
+                    this.inputAnchor = params.get('anchor') || 'TME';
+                    this.isSacMonthly = params.get('sac') === 'true';
+                    this.currency = params.get('currency') || 'USD';
+                    
+                    let initialValue = parseFloat(params.get('value'));
+                    
+                    if (isNaN(initialValue) || initialValue <= 0) {
+                        // Set reasonable default if URL params are missing or invalid
+                        this.inputValue = this.currency === 'ARS' ? 2550000 : 3000;
+                    } else {
+                         this.inputValue = initialValue;
+                    }
+                },
+
+                updateUrlState() {
+                    try {
+                        const newUrl = new URL(window.location.href.split('?')[0]);
+                        newUrl.searchParams.set('anchor', this.inputAnchor);
+                        newUrl.searchParams.set('value', this.inputValue);
+                        newUrl.searchParams.set('sac', this.isSacMonthly);
+                        newUrl.searchParams.set('currency', this.currency);
+                        // Using replaceState instead of pushState to prevent error in restricted environments
+                        window.history.replaceState({}, '', newUrl.toString());
+                    } catch (e) {
+                         // Fallback for security errors in iframe environments
+                         console.warn("Could not update URL state:", e);
+                    }
+                },
+
+                recalculate() {
+                    if (this.inputValue < 0 || isNaN(this.inputValue)) {
+                        this.inputValue = 0;
+                    }
+                    
+                    let value = this.inputValue;
+                    let target_in_usd = value;
+
+                    // Convert input value to USD if the user is operating in ARS
+                    if (this.currency === 'ARS' && value > 0) {
+                        target_in_usd = round(value / EXCHANGE_RATE_ARS);
+                    }
+
+                    if (this.inputAnchor === 'TME') {
+                        this.E = target_in_usd;
+                        this.C = round(this.E / (1 + EMPLOYER_RATE));
+                        
+                    } else if (this.inputAnchor === 'Gross') {
+                        let sac_multiplier = this.isSacMonthly ? (1 + SAC_FACTOR) : 1;
+                        this.C = round(target_in_usd * sac_multiplier);
+                        this.E = round(this.C * (1 + EMPLOYER_RATE));
+
+                    } else if (this.inputAnchor === 'Net') {
+                        this.C = round(target_in_usd / NET_ESTIMATE_FACTOR);
+                        this.E = round(this.C * (1 + EMPLOYER_RATE));
+                    }
+                    
+                    // --- Common Calculations based on C (all in USD) ---
+
+                    if (this.isSacMonthly) {
+                        this.A = round(this.C / (1 + SAC_FACTOR));
+                        this.B = round(this.C - this.A);
+                    } else {
+                        this.A = this.C;
+                        this.B = 0;
+                    }
+
+                    this.D = round(this.C * EMPLOYER_RATE);
+                    
+                    // Recalculate TME (E) and Total Invoice (G)
+                    if (this.inputAnchor !== 'TME') {
+                        this.E = round(this.C + this.D);
+                    }
+                    this.G = round(this.E + EOR_FEE);
+
+                    // Calculate Estimated Net Salary (N)
+                    this.N = round(this.C * NET_ESTIMATE_FACTOR);
+                    
+                    // Update URL and Chart
+                    this.updateUrlState();
+                    this.updateChart();
+                },
+                
+                updateChart() {
+                    
+                    let dataA = this.A;
+                    let dataB = this.B;
+                    let dataD = this.D;
+                    let dataF = this.F;
+                    
+                    // Convert chart values to ARS if selected
+                    if (this.currency === 'ARS') {
+                        dataA = round(dataA * EXCHANGE_RATE_ARS);
+                        dataB = round(dataB * EXCHANGE_RATE_ARS);
+                        dataD = round(dataD * EXCHANGE_RATE_ARS);
+                        dataF = round(dataF * EXCHANGE_RATE_ARS);
+                    }
+                    
+                    if (this.isSacMonthly) {
+                        // Chart Data: [Total Gross Remuneration (C), Employer Contributions (D), EOR Fee (F)]
+                        costChart.data.labels = [
+                            'Total Gross Remuneration (C)',
+                            'Employer Statutory Contributions (D)',
+                            'RecruitGo EOR Fee (F)'
+                        ];
+                        costChart.data.datasets[0].data = [dataA + dataB, dataD, dataF];
+
+                    } else {
+                        // Chart Data: [Base Salary (A), Employer Contributions (D), EOR Fee (F)]
+                        costChart.data.labels = [
+                            'Employee Base Salary (A)',
+                            'Employer Statutory Contributions (D)',
+                            'RecruitGo EOR Fee (F)'
+                        ];
+                         costChart.data.datasets[0].data = [dataA, dataD, dataF];
+                    }
+                    
+                    costChart.update();
+                }
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const ctx = document.getElementById('costBreakdownChart').getContext('2d');
+            
+            // Initial Chart setup before Alpine loads and recalculates
+            costChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Total Employment Cost (TME: C + D)',
+                        'RecruitGo EOR Fee (F)'
+                    ],
+                    datasets: [{
+                        label: 'Cost Breakdown',
+                        data: [3000, 300], 
+                        backgroundColor: [
+                            'rgb(79, 70, 229)',
+                            'rgb(165, 180, 252)',
+                            'rgb(30, 64, 175)'
+                        ],
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const costStore = window.Alpine.store('costCalculator');
+                                    const currency = costStore?.currency || 'USD';
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label = label.length > 30 ? label.substring(0, 27) + '...' : label;
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        let code = currency === 'ARS' ? 'ARS' : 'USD';
+                                        let minFrac = currency === 'ARS' ? 0 : 2;
+
+                                        label += new Intl.NumberFormat('en-US', { 
+                                            style: 'currency', 
+                                            currency: code,
+                                            minimumFractionDigits: minFrac
+                                        }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const navigationLinks = document.querySelectorAll('nav a');
+            navigationLinks.forEach(link => {
+                link.addEventListener('click', (e) => {
+                    const sectionId = e.target.closest('a').hash.substring(1);
+                    if (sectionId === 'dashboard') {
+                        setTimeout(() => {
+                           costChart.resize();
+                        }, 10);
+                    }
+                });
+            });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        // Preload critical resources
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').catch(() => {});
+            });
+        }
+    </script>
+
+    <!-- Start of HubSpot Embed Code -->
+    <script type="text/javascript" id="hs-script-loader" async defer src="//js-na2.hs-scripts.com/39865212.js"></script>
+    <!-- End of HubSpot Embed Code -->
+</body>
+</html>
