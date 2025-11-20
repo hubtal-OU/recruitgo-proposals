@@ -665,12 +665,12 @@
                 },
                 
                 updateChart() {
-                    
+
                     let dataA = this.A;
                     let dataB = this.B;
                     let dataD = this.D;
                     let dataF = this.F;
-                    
+
                     // Convert chart values to ARS if selected
                     if (this.currency === 'ARS') {
                         dataA = round(dataA * EXCHANGE_RATE_ARS);
@@ -678,26 +678,41 @@
                         dataD = round(dataD * EXCHANGE_RATE_ARS);
                         dataF = round(dataF * EXCHANGE_RATE_ARS);
                     }
-                    
+
                     if (this.isSacMonthly) {
-                        // Chart Data: [Total Gross Remuneration (C), Employer Contributions (D), EOR Fee (F)]
+                        // Detailed breakdown with 13th salary provision
                         costChart.data.labels = [
-                            'Total Gross Remuneration (C)',
+                            'Employee Base Salary (A)',
+                            '13th Salary Provision (B)',
                             'Employer Statutory Contributions (D)',
                             'RecruitGo EOR Fee (F)'
                         ];
-                        costChart.data.datasets[0].data = [dataA + dataB, dataD, dataF];
-
+                        costChart.data.datasets[0].data = [dataA, dataB, dataD, dataF];
+                        costChart.data.datasets[0].backgroundColor = [
+                            'rgb(34, 197, 94)',   // Green for base salary
+                            'rgb(59, 130, 246)',  // Blue for 13th salary
+                            'rgb(249, 115, 22)',  // Orange for employer contributions
+                            'rgb(139, 92, 246)'   // Purple for EOR fee
+                        ];
+                        costChart.data.datasets[0].borderWidth = 2;
+                        costChart.data.datasets[0].borderColor = '#ffffff';
                     } else {
-                        // Chart Data: [Base Salary (A), Employer Contributions (D), EOR Fee (F)]
+                        // Breakdown without 13th salary provision
                         costChart.data.labels = [
                             'Employee Base Salary (A)',
                             'Employer Statutory Contributions (D)',
                             'RecruitGo EOR Fee (F)'
                         ];
-                         costChart.data.datasets[0].data = [dataA, dataD, dataF];
+                        costChart.data.datasets[0].data = [dataA, dataD, dataF];
+                        costChart.data.datasets[0].backgroundColor = [
+                            'rgb(34, 197, 94)',   // Green for base salary
+                            'rgb(249, 115, 22)',  // Orange for employer contributions
+                            'rgb(139, 92, 246)'   // Purple for EOR fee
+                        ];
+                        costChart.data.datasets[0].borderWidth = 2;
+                        costChart.data.datasets[0].borderColor = '#ffffff';
                     }
-                    
+
                     costChart.update();
                 }
             }
@@ -711,18 +726,23 @@
                 type: 'doughnut',
                 data: {
                     labels: [
-                        'Total Employment Cost (TME: C + D)',
+                        'Employee Base Salary (A)',
+                        '13th Salary Provision (B)',
+                        'Employer Statutory Contributions (D)',
                         'RecruitGo EOR Fee (F)'
                     ],
                     datasets: [{
                         label: 'Cost Breakdown',
-                        data: [3000, 300], 
+                        data: [2180, 182, 638, 300],
                         backgroundColor: [
-                            'rgb(79, 70, 229)',
-                            'rgb(165, 180, 252)',
-                            'rgb(30, 64, 175)'
+                            'rgb(34, 197, 94)',   // Green for base salary
+                            'rgb(59, 130, 246)',  // Blue for 13th salary
+                            'rgb(249, 115, 22)',  // Orange for employer contributions
+                            'rgb(139, 92, 246)'   // Purple for EOR fee
                         ],
-                        hoverOffset: 4
+                        hoverOffset: 4,
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
                     }]
                 },
                 options: {
