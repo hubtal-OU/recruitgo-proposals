@@ -13,6 +13,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" defer></script>
     <!-- Chosen Palette: Neutral Professional (Warm neutrals with a blue/indigo accent) --><!-- Application Structure Plan: A SPA with a sticky side-navigation (top-bar on mobile) and a main content area. The 12 report sections are synthesized into 5 user-centric themes: 1. Dashboard (Overview/Cost Chart), 2. Detailed Cost (CTC Table), 3. Process (Interactive Onboarding/Monthly flow), 4. Benefits & Legal (Tabbed entitlements/benefits), 5. Terms (Finance, Security, POC). This structure is chosen to match a user's mental model (Overview -> Cost Details -> Process -> Legal -> Fine Print) rather than a linear document, improving usability and quick access to information. --><!-- Visualization & Content Choices: 1. Key Costs (Sec 1&4) -> Goal: Inform -> Viz: Large number "Key Metric" cards -> Interaction: Dynamic update based on calculator -> Justification: Immediate "bottom line" answer -> Method: HTML/Tailwind/JS. 2. Total Invoice Breakdown (Sec 4) -> Goal: Inform (Proportions) -> Viz: Doughnut Chart -> Interaction: Hover for details, updates with calculator -> Justification: Visual split of TME vs. Fee -> Library: Chart.js (Canvas). 3. Process Flow (Sec 2, 6, 9) -> Goal: Organize/Show change -> Viz: Tabbed sequential lists -> Interaction: JS-powered tabs for "Onboarding" and "Monthly Cycle" -> Justification: Makes dense process info interactive and digestible. -> Method: HTML/Tailwind/JS (No SVG/Mermaid). 4. Entitlements/Benefits (Sec 7, 8) -> Goal: Organize -> Viz: Tabbed content blocks -> Interaction: JS-powered tabs -> Justification: Groups related legal/HR info neatly. -> Method: HTML/Tailwind/JS. --><!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. --><style>
         .chart-container {
             position: relative;
@@ -29,11 +30,63 @@
             }
         }
         [x-cloak] { display: none !important; }
+
+        /* PDF-specific styles */
+        @media print {
+            .sidebar-nav { display: none !important; }
+            .mobile-nav { display: none !important; }
+            .main-content { margin-left: 0 !important; padding-left: 0 !important; }
+            .pdf-page-break { page-break-before: always; }
+            .chart-container { max-width: 100%; height: 400px; }
+        }
+
+        .pdf-generating .sidebar-nav { display: none !important; }
+        .pdf-generating .mobile-nav { display: none !important; }
+        .pdf-generating .main-content { margin-left: 0 !important; padding-left: 0 !important; }
+        .pdf-generating .chart-container { max-width: 100%; height: 400px; }
+
+        /* PDF Header and Footer Styles */
+        .pdf-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: white;
+            border-bottom: 2px solid #4f46e5;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 1000;
+        }
+
+        .pdf-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #64748b;
+            z-index: 1000;
+        }
+
+        .pdf-content {
+            margin-top: 80px;
+            margin-bottom: 60px;
+        }
     </style>
 </head>
 <body class="h-full" x-data="{ open: false, activeSection: 'dashboard' }">
     <div class="min-h-full">
-        <nav class="bg-gray-800 md:hidden" x-data="{ open: false }">
+        <nav class="bg-gray-800 md:hidden mobile-nav" x-data="{ open: false }">
             <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
                 <div class="flex h-16 items-center justify-between">
                     <div class="flex items-center">
@@ -43,7 +96,17 @@
                             </a>
                         </div>
                     </div>
-                    <div class="-mr-2 flex">
+                    <div class="-mr-2 flex items-center space-x-2">
+                        <button @click="downloadPDF()" :disabled="isGeneratingPDF" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg x-show="!isGeneratingPDF" class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            <svg x-show="isGeneratingPDF" x-cloak class="mr-1 h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span x-text="isGeneratingPDF ? 'Generating...' : 'Download PDF'"></span>
+                        </button>
                         <button @click="open = !open" type="button" class="inline-flex items-center justify-center rounded-md bg-gray-800 p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800" aria-controls="mobile-menu" aria-expanded="false">
                             <span class="sr-only">Open main menu</span>
                             <svg :class="{'hidden': open, 'block': !open }" class="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
@@ -67,13 +130,23 @@
             </div>
         </nav>
 
-        <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col">
+        <div class="hidden md:fixed md:inset-y-0 md:flex md:w-64 md:flex-col sidebar-nav">
             <div class="flex min-h-0 flex-1 flex-col bg-gray-800">
                 <div class="flex flex-1 flex-col overflow-y-auto pt-5 pb-4">
-                    <div class="flex flex-shrink-0 items-center px-4">
+                    <div class="flex flex-shrink-0 items-center justify-between px-4">
                         <a href="https://recruitgo.com" target="_blank">
                             <img class="h-8 w-auto" src="https://i0.wp.com/recruitgo.com/wp-content/uploads/2025/06/recruitgo-header-logo.png" onerror="this.onerror=null; this.src='https://placehold.co/150x32/1e3a8a/ffffff?text=RecruitGo';" alt="RecruitGo Logo">
                         </a>
+                        <button @click="downloadPDF()" :disabled="isGeneratingPDF" class="inline-flex items-center rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed">
+                            <svg x-show="!isGeneratingPDF" class="mr-1 h-3 w-3" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                            </svg>
+                            <svg x-show="isGeneratingPDF" x-cloak class="mr-1 h-3 w-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span x-text="isGeneratingPDF ? 'Generating...' : 'PDF'"></span>
+                        </button>
                     </div>
                     <nav class="mt-5 flex-1 space-y-1 px-2">
                         <!-- Changed text-gray-300 to text-gray-200 for better visibility -->
@@ -102,7 +175,7 @@
             </div>
         </div>
 
-        <div class="flex flex-1 flex-col md:pl-64">
+        <div class="flex flex-1 flex-col md:pl-64 main-content">
             <main class="flex-1">
                 <div class="py-6">
                     <div class="mx-auto max-w-7xl px-4 sm:px-6 md:px-8">
@@ -269,6 +342,8 @@
                                 </div>
                             </section>
 
+                        <div class="pdf-page-break"></div>
+
                         <section id="process" x-show="activeSection === 'process'" x-data="{ activeTab: 'onboarding' }">
                             <div class="mb-6">
                                 <h2 class="text-2xl font-semibold text-gray-900">Service Process</h2>
@@ -373,7 +448,9 @@
                                 </div>
                             </div>
                         </section>
-                        
+
+                        <div class="pdf-page-break"></div>
+
                         <section id="benefits-legal" x-show="activeSection === 'benefits-legal'" x-data="{ activeTab: 'entitlements' }">
                             <div class="mb-6">
                                 <h2 class="text-2xl font-semibold text-gray-900">Benefits & Legal</h2>
@@ -520,17 +597,157 @@
 
     <script>
         let costChart = null;
-        
-        const EMPLOYER_RATE = 0.27; 
-        const SAC_FACTOR = 1 / 12; 
-        const EOR_FEE = 300; 
-        const EE_DEDUCTIONS_RATE = 0.17; 
-        const EE_TAX_ESTIMATE_RATE = 0.10; 
-        const NET_ESTIMATE_FACTOR = 1 - EE_DEDUCTIONS_RATE - EE_TAX_ESTIMATE_RATE; 
+        let isGeneratingPDF = false;
+
+        const EMPLOYER_RATE = 0.27;
+        const SAC_FACTOR = 1 / 12;
+        const EOR_FEE = 300;
+        const EE_DEDUCTIONS_RATE = 0.17;
+        const EE_TAX_ESTIMATE_RATE = 0.10;
+        const NET_ESTIMATE_FACTOR = 1 - EE_DEDUCTIONS_RATE - EE_TAX_ESTIMATE_RATE;
         const EXCHANGE_RATE_ARS = 850; 
 
         function round(num) {
             return Math.round((num + Number.EPSILON) * 100) / 100;
+        }
+
+        // PDF Generation Function
+        async function downloadPDF() {
+            if (!window.html2pdf || isGeneratingPDF) return;
+
+            try {
+                isGeneratingPDF = true;
+
+                // Add PDF generating class for styling
+                document.body.classList.add('pdf-generating');
+
+                // Get current date for footer
+                const currentDate = new Date().toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                // Configure PDF options with header and footer
+                const opt = {
+                    margin: [1.2, 0.5, 0.8, 0.5], // top, right, bottom, left margins in inches
+                    filename: 'RecruitGo_EOR_Proposal_Argentina.pdf',
+                    image: { type: 'jpeg', quality: 0.95 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        logging: false,
+                        backgroundColor: '#ffffff'
+                    },
+                    jsPDF: {
+                        unit: 'in',
+                        format: 'a4',
+                        orientation: 'portrait',
+                        compress: true
+                    },
+                    pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+                };
+
+                // Wait for charts to be ready
+                if (costChart) {
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                }
+
+                // Create wrapper with header and footer
+                const wrapper = document.createElement('div');
+                wrapper.style.position = 'relative';
+                wrapper.style.minHeight = '100vh';
+
+                // Create header
+                const header = document.createElement('div');
+                header.className = 'pdf-header';
+                header.innerHTML = `
+                    <div style="display: flex; align-items: center;">
+                        <img src="https://i0.wp.com/recruitgo.com/wp-content/uploads/2025/06/recruitgo-header-logo.png"
+                             alt="RecruitGo" style="height: 30px; margin-right: 10px;"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div style="display: none; color: #4f46e5; font-weight: bold; font-size: 18px;">RecruitGo</div>
+                    </div>
+                    <div style="color: #64748b; font-size: 14px; font-weight: 500;">
+                        EOR Proposal - Argentina
+                    </div>
+                `;
+
+                // Create spacing for footer (footer will be added by jsPDF)
+                const footerSpacer = document.createElement('div');
+                footerSpacer.style.height = '60px'; // Space for footer
+
+                // Clone the main content
+                const mainContent = document.querySelector('.main-content');
+                const clonedContent = mainContent.cloneNode(true);
+
+                // Add pdf-content class for proper margins
+                clonedContent.className += ' pdf-content';
+
+                // Show all sections in the clone
+                const sections = clonedContent.querySelectorAll('section[id]');
+                sections.forEach(section => {
+                    section.style.display = 'block';
+                    section.removeAttribute('x-show');
+                });
+
+                // Remove interactive elements
+                const interactiveElements = clonedContent.querySelectorAll('[x-data], button, input, select');
+                interactiveElements.forEach(el => {
+                    if (el.tagName === 'BUTTON' || el.tagName === 'INPUT' || el.tagName === 'SELECT') {
+                        el.style.display = 'none';
+                    }
+                });
+
+                // Show all tab content
+                const tabContents = clonedContent.querySelectorAll('[x-show]');
+                tabContents.forEach(el => {
+                    el.style.display = 'block';
+                    el.removeAttribute('x-show');
+                });
+
+                // Assemble final content
+                wrapper.appendChild(header);
+                wrapper.appendChild(clonedContent);
+                wrapper.appendChild(footerSpacer);
+
+                // Generate PDF with header and footer
+                await html2pdf()
+                    .set(opt)
+                    .from(wrapper)
+                    .toPdf()
+                    .get('pdf')
+                    .then(function(pdf) {
+                        const totalPages = pdf.internal.getNumberOfPages();
+
+                        for (let i = 1; i <= totalPages; i++) {
+                            pdf.setPage(i);
+
+                            // Add footer text with page numbers
+                            pdf.setFontSize(10);
+                            pdf.setTextColor(100, 116, 139); // gray-500
+
+                            // Left side footer text
+                            const footerLeft = `Generated on ${currentDate} | recruitgo.com`;
+                            pdf.text(footerLeft, 0.5, pdf.internal.pageSize.height - 0.3);
+
+                            // Right side page numbers
+                            const pageText = `Page ${i} of ${totalPages}`;
+                            const pageWidth = pdf.internal.pageSize.width;
+                            const textWidth = pdf.getTextWidth(pageText);
+                            pdf.text(pageText, pageWidth - textWidth - 0.5, pdf.internal.pageSize.height - 0.3);
+                        }
+                    })
+                    .save();
+
+            } catch (error) {
+                console.error('PDF generation failed:', error);
+                alert('Failed to generate PDF. Please try again.');
+            } finally {
+                isGeneratingPDF = false;
+                document.body.classList.remove('pdf-generating');
+            }
         }
 
         // Global function to read the latest calculated values and format them
@@ -560,22 +777,26 @@
 
         function costCalculator() {
             return {
-                inputAnchor: 'TME', 
+                inputAnchor: 'TME',
                 inputValue: 3000,
-                isSacMonthly: true, 
+                isSacMonthly: true,
                 currency: 'USD',
 
                 E: 3000,
                 G: 3300,
-                C: 2362.20, 
-                A: 2180.49, 
-                B: 181.71,  
-                D: 637.80,  
-                F: EOR_FEE, 
-                N: 1724.41, 
+                C: 2362.20,
+                A: 2180.49,
+                B: 181.71,
+                D: 637.80,
+                F: EOR_FEE,
+                N: 1724.41,
 
                 init() {
                     window.Alpine.store('costCalculator', this);
+                    // Make isGeneratingPDF globally available
+                    window.Alpine.store('isGeneratingPDF', () => isGeneratingPDF);
+                    // Make downloadPDF function globally available
+                    window.downloadPDF = downloadPDF;
                     this.readUrlState();
                     this.recalculate();
                 },

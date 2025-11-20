@@ -27,7 +27,7 @@
     X-XSS-Protection = "1; mode=block"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
-    Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://i0.wp.com https://placehold.co https://js-na2.hs-scripts.com *.hsforms.net *.hubspot.com; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https: *.hubspot.com *.hsforms.net"
+    Content-Security-Policy = "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://i0.wp.com https://placehold.co https://js-na2.hs-scripts.com *.hsforms.net *.hubspot.com; img-src 'self' data: https:; font-src 'self' https:; connect-src 'self' https: *.hubspot.com *.hsforms.net"
 
 [[headers]]
   for = "*.html"
